@@ -1,10 +1,3 @@
-﻿-- ====================================================================
--- Qbox FiveM Server Base SQL Database
--- Generated for Qbox Framework & jacob_multicharacter
--- ====================================================================
-
-CREATE DATABASE IF NOT EXISTS `Qbox_026D2F` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
-USE `Qbox_026D2F`;
 /*M!999999\- enable the sandbox mode */ 
 -- MariaDB dump 10.20-13.0.2-MariaDB, for Win64 (AMD64)
 --
@@ -1220,6 +1213,10 @@ COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 
 --
+-- Dumping events for database 'Qbox_026D2F'
+--
+
+--
 -- Dumping routines for database 'Qbox_026D2F'
 --
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -1232,5 +1229,4 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-11-22 12:44:53
-
+-- Dump completed on 2026-11-22 19:31:07
