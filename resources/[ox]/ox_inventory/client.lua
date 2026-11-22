@@ -1236,6 +1236,7 @@ RegisterNetEvent('ox_inventory:setPlayerInventory', function(currentDrops, inven
 
 		ItemData[v.name] = {
 			label = v.label,
+			limit = v.limit,
 			stack = v.stack,
 			close = v.close,
 			count = 0,

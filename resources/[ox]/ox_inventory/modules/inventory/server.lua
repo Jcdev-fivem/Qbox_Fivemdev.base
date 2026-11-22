@@ -468,38 +468,8 @@ end
 
 ---@param item table
 ---@param slot table
-function Inventory.SlotWeight(item, slot, ignoreCount)
-	local weight = ignoreCount and item.weight or item.weight * (slot.count or 1)
-
-	if not slot.metadata then slot.metadata = {} end
-
-	if item.ammoname and slot.metadata.ammo then
-		local ammoWeight = Items(item.ammoname)?.weight
-
-		if ammoWeight then
-			weight += (ammoWeight * slot.metadata.ammo)
-		end
-	end
-
-    if item.hash == `WEAPON_PETROLCAN` then
-        slot.metadata.weight = 15000 * (slot.metadata.ammo / 100)
-    end
-
-	if slot.metadata.components then
-		for i = #slot.metadata.components, 1, -1 do
-			local componentWeight = Items(slot.metadata.components[i])?.weight
-
-			if componentWeight then
-				weight += componentWeight
-			end
-		end
-	end
-
-	if slot.metadata.weight then
-		weight += ignoreCount and slot.metadata.weight or (slot.metadata.weight * (slot.count or 1))
-	end
-
-	return weight
+function Inventory.SlotWeight()
+    return 0
 end
 
 ---@param items table
@@ -955,7 +925,7 @@ function Inventory.ContainerWeight(container, metaWeight, playerInventory)
 	playerInventory.weight -= container.weight
 	container.weight = Items(container.name).weight
 	container.weight += metaWeight
-	container.metadata.weight = metaWeight
+	container.metadata.weight = nil
 	playerInventory.weight += container.weight
 end
 
@@ -1201,6 +1171,13 @@ function Inventory.AddItem(inv, item, count, metadata, slot, cb)
 	end
 
 	if not toSlot then return false, 'inventory_full' end
+
+	local addedCount = slotCount
+	if type(toSlot) == 'table' then
+		addedCount = 0
+		for _, entry in ipairs(toSlot) do addedCount += entry.count end
+	end
+	if not Inventory.CanAddToLimit(inv, item, addedCount) then return false, 'cannot_carry' end
 
 	inv.changed = true
 
@@ -1466,6 +1443,14 @@ function Inventory.RemoveItem(inv, item, count, metadata, slot, ignoreTotal, str
 end
 exports('RemoveItem', Inventory.RemoveItem)
 
+function Inventory.CanAddToLimit(inv, item, count)
+    if count <= 0 then return true end
+    for _, slot in pairs(inv.items) do
+        if slot.name == item.name then count += slot.count end
+    end
+    return count <= item.limit
+end
+
 ---@param inv inventory
 ---@param item table | string
 ---@param count number
@@ -1481,20 +1466,10 @@ function Inventory.CanCarryItem(inv, item, count, metadata)
 
 			if not itemSlots then return end
 
-			local weight = metadata and metadata.weight or item.weight
-
 			if next(itemSlots) or emptySlots > 0 then
 				if not count then count = 1 end
 				if not item.stack and emptySlots < count then return false end
-				if weight == 0 then return true end
-
-				local newWeight = inv.weight + (weight * count)
-
-				if newWeight > inv.maxWeight then
-					return false
-				end
-
-				return true
+				return Inventory.CanAddToLimit(inv, item, count)
 			end
 		end
 	end
@@ -1508,8 +1483,7 @@ function Inventory.CanCarryAmount(inv, item)
 	inv = Inventory(inv) --[[@as OxInventory]]
 
     if inv and item then
-		local availableWeight = inv.maxWeight - inv.weight
-		return math.floor(availableWeight / item.weight)
+		return math.max(0, item.limit - Inventory.GetItemCount(inv, item.name))
     end
 end
 
@@ -1522,9 +1496,7 @@ function Inventory.CanCarryWeight(inv, weight)
 
 	if not inv then return end
 
-	local availableWeight = inv.maxWeight - inv.weight
-	local canHold = availableWeight >= weight
-	return canHold, availableWeight
+	return true, math.huge
 end
 exports('CanCarryWeight', Inventory.CanCarryWeight)
 
@@ -1542,9 +1514,8 @@ function Inventory.CanSwapItem(inv, firstItem, firstItemCount, testItem, testIte
 	local testItemData = Inventory.GetItem(inv, testItem)
 
 	if firstItemData and testItemData and firstItemData.count >= firstItemCount then
-		local weightWithoutFirst = inv.weight - (firstItemData.weight * firstItemCount)
-		local weightWithTest = weightWithoutFirst + (testItemData.weight * testItemCount)
-		return weightWithTest <= inv.maxWeight
+		local incoming = testItemCount - (firstItemData.name == testItemData.name and firstItemCount or 0)
+		return Inventory.CanAddToLimit(inv, testItemData, incoming)
 	end
 end
 exports('CanSwapItem', Inventory.CanSwapItem)
@@ -1640,7 +1611,7 @@ local function dropItem(source, playerInventory, fromData, data)
 	toData.count = data.count
 	toData.weight = Inventory.SlotWeight(Items(toData.name), toData)
 
-    if toData.weight > shared.dropweight then return end
+    if toData.count > Items(toData.name).limit then return false, 'cannot_carry' end
 
     local dropId = generateInvId('drop')
 
@@ -1820,42 +1791,50 @@ lib.callback.register('ox_inventory:swapItems', function(source, data)
 				hookPayload.action = 'swap'
 
 				if not sameInventory then
-					if (toWeight <= toInventory.maxWeight and fromWeight <= fromInventory.maxWeight) then
-						local hooks <close> = TriggerEventHooks('swapItems', hookPayload)
+					local hooks <close> = TriggerEventHooks('swapItems', hookPayload)
 
-						if not hooks.success then return end
-						if not partiesPresent() then hooks.success = false return end
+					if not hooks.success then return end
+					if not partiesPresent() then hooks.success = false return end
 
-						if containerItem then
-							local toContainer = toInventory.type == 'container'
-							local whitelist = Items.containers[containerItem.name]?.whitelist
-							local blacklist = Items.containers[containerItem.name]?.blacklist
-							local checkItem = toContainer and fromData.name or toData.name
+					local sameItem = fromData.name == toData.name
+					local toAdded = fromData.count - (sameItem and toData.count or 0)
+					local fromAdded = toData.count - (sameItem and fromData.count or 0)
 
-							if (whitelist and not whitelist[checkItem]) or (blacklist and blacklist[checkItem]) then
-								hooks.success = false
-								return
-							end
+					if not Inventory.CanAddToLimit(toInventory, Items(fromData.name), toAdded)
+						or not Inventory.CanAddToLimit(fromInventory, Items(toData.name), fromAdded) then
+						hooks.success = false
+						return false, 'cannot_carry'
+					end
 
-							Inventory.ContainerWeight(containerItem, toContainer and toWeight or fromWeight, playerInventory)
+					if containerItem then
+						local toContainer = toInventory.type == 'container'
+						local whitelist = Items.containers[containerItem.name]?.whitelist
+						local blacklist = Items.containers[containerItem.name]?.blacklist
+						local checkItem = toContainer and fromData.name or toData.name
+
+						if (whitelist and not whitelist[checkItem]) or (blacklist and blacklist[checkItem]) then
+							hooks.success = false
+							return
 						end
 
-						if fromOtherPlayer then
-							TriggerClientEvent('ox_inventory:itemNotify', fromInventory.id, { fromData, 'ui_removed', fromData.count })
-							TriggerClientEvent('ox_inventory:itemNotify', fromInventory.id, { toData, 'ui_added', toData.count })
-						elseif toOtherPlayer then
-							TriggerClientEvent('ox_inventory:itemNotify', toInventory.id, { fromData, 'ui_added', fromData.count })
-							TriggerClientEvent('ox_inventory:itemNotify', toInventory.id, { toData, 'ui_removed', toData.count })
-						end
+						Inventory.ContainerWeight(containerItem, toContainer and toWeight or fromWeight, playerInventory)
+					end
 
-						fromInventory.weight = fromWeight
-						toInventory.weight = toWeight
-						toData, fromData = Inventory.SwapSlots(fromInventory, toInventory, data.fromSlot, data.toSlot) --[[@as table]]
+					if fromOtherPlayer then
+						TriggerClientEvent('ox_inventory:itemNotify', fromInventory.id, { fromData, 'ui_removed', fromData.count })
+						TriggerClientEvent('ox_inventory:itemNotify', fromInventory.id, { toData, 'ui_added', toData.count })
+					elseif toOtherPlayer then
+						TriggerClientEvent('ox_inventory:itemNotify', toInventory.id, { fromData, 'ui_added', fromData.count })
+						TriggerClientEvent('ox_inventory:itemNotify', toInventory.id, { toData, 'ui_removed', toData.count })
+					end
 
-						if server.loglevel > 0 then
-							lib.logger(playerInventory.owner, 'swapSlots', ('%sx %s transferred from "%s" to "%s" for %sx %s'):format(fromData.count, fromData.name, fromInventory.owner and fromInventory.label or fromInventory.id, toInventory.owner and toInventory.label or toInventory.id, toData.count, toData.name))
-						end
-					else return false, 'cannot_carry' end
+					fromInventory.weight = fromWeight
+					toInventory.weight = toWeight
+					toData, fromData = Inventory.SwapSlots(fromInventory, toInventory, data.fromSlot, data.toSlot) --[[@as table]]
+
+					if server.loglevel > 0 then
+						lib.logger(playerInventory.owner, 'swapSlots', ('%sx %s transferred from "%s" to "%s" for %sx %s'):format(fromData.count, fromData.name, fromInventory.owner and fromInventory.label or fromInventory.id, toInventory.owner and toInventory.label or toInventory.id, toData.count, toData.name))
+					end
 				else
 					local hooks <close> = TriggerEventHooks('swapItems', hookPayload)
 
@@ -1877,13 +1856,17 @@ lib.callback.register('ox_inventory:swapItems', function(source, data)
 
 				local totalWeight = toInventory.weight - toData.weight + toSlotWeight
 
-				if fromInventory.type == 'container' or sameInventory or totalWeight <= toInventory.maxWeight then
+				if sameInventory or Inventory.CanAddToLimit(toInventory, Items(fromData.name), data.count) then
 					hookPayload.action = 'stack'
 
 					local hooks <close> = TriggerEventHooks('swapItems', hookPayload)
 
 					if not hooks.success then return end
 					if not partiesPresent() then hooks.success = false return end
+					if not sameInventory and not Inventory.CanAddToLimit(toInventory, Items(fromData.name), data.count) then
+						hooks.success = false
+						return false, 'cannot_carry'
+					end
 
 					fromData.count, toData.count = fromCount, toCount
 					toData.weight = toSlotWeight
@@ -1918,13 +1901,17 @@ lib.callback.register('ox_inventory:swapItems', function(source, data)
 				toData.slot = data.toSlot
 				toData.weight = Inventory.SlotWeight(Items(toData.name), toData)
 
-				if fromInventory.type == 'container' or sameInventory or (toInventory.weight + toData.weight <= toInventory.maxWeight) then
+				if sameInventory or Inventory.CanAddToLimit(toInventory, Items(fromData.name), data.count) then
 					hookPayload.action = 'move'
 
 					local hooks <close> = TriggerEventHooks('swapItems', hookPayload)
 
 					if not hooks.success then return end
 					if not partiesPresent() then hooks.success = false return end
+					if not sameInventory and not Inventory.CanAddToLimit(toInventory, Items(fromData.name), data.count) then
+						hooks.success = false
+						return false, 'cannot_carry'
+					end
 
 					if not sameInventory then
 						local toContainer = toInventory.type == 'container'

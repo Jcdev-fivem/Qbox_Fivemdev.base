@@ -6,6 +6,13 @@ end
 
 local ItemList = {}
 local isServer = IsDuplicityVersion()
+local defaultLimit = math.max(1, GetConvarInt('inventory:itemlimit', 50))
+
+local function setItemLimit(item)
+    item.limit = math.tointeger(item.limit) or defaultLimit
+    if item.limit < 1 then item.limit = defaultLimit end
+    item.weight = 0
+end
 
 local function setImagePath(path)
     if path then
@@ -15,7 +22,7 @@ end
 
 ---@param data OxItem
 local function newItem(data)
-	data.weight = data.weight or 0
+	setItemLimit(data)
 
 	if data.close == nil then
 		data.close = true
@@ -77,7 +84,7 @@ for type, data in pairs(lib.load('data.weapons') or {}) do
 	for k, v in pairs(data) do
 		v.name = k
 		v.close = type == 'Ammo' and true or false
-        v.weight = v.weight or 0
+        setItemLimit(v)
 
 		if type == 'Weapons' then
 			---@cast v OxWeapon

@@ -183,10 +183,12 @@ return {
 
     ['money'] = {
         label = 'Money',
+        limit = 2147483647,
     },
 
     ['black_money'] = {
         label = 'Dirty Money',
+        limit = 2147483647,
     },
 
     ['id_card'] = {

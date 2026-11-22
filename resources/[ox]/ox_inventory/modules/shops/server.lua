@@ -247,9 +247,8 @@ lib.callback.register('ox_inventory:buyItem', function(source, data)
 			local price = count * fromData.price
 
 			if toData == nil or (fromItem.name == toItem?.name and fromItem.stack and table.matches(toData.metadata, metadata)) then
-				local newWeight = playerInv.weight + (fromItem.weight + (metadata?.weight or 0)) * count
-
-				if newWeight > playerInv.maxWeight then
+				local added = count - (currency == fromItem.name and price or 0)
+				if not Inventory.CanAddToLimit(playerInv, fromItem, added) then
 					return false, false, { type = 'error', description = locale('cannot_carry') }
 				end
 
@@ -278,7 +277,10 @@ lib.callback.register('ox_inventory:buyItem', function(source, data)
 					currency = currency,
 				})
 
-				if not hooks.success or not Inventory.SetSlot(playerInv, fromItem, count, metadata, data.toSlot) then
+				if not hooks.success
+					or not Inventory.CanAddToLimit(playerInv, fromItem, added)
+					or not Inventory.SetSlot(playerInv, fromItem, count, metadata, data.toSlot) then
+					hooks.success = false
 					if fromData.count then
 						fromData.count += count
 					end
@@ -286,7 +288,6 @@ lib.callback.register('ox_inventory:buyItem', function(source, data)
 					return false
 				end
 
-				playerInv.weight = newWeight
 				removeCurrency(playerInv, currency, price)
 
 				if server.syncInventory then server.syncInventory(playerInv) end

@@ -122,24 +122,15 @@ lib.callback.register('ox_inventory:craftItem', function(source, id, index, reci
 			local craftedItem = Items(recipe.name)
 			local craftCount = (type(recipe.count) == 'number' and recipe.count) or (table.type(recipe.count) == 'array' and math.random(recipe.count[1], recipe.count[2])) or 1
 
-			-- Modified weight calculation
-			local newWeight = left.weight
-			local items = Inventory.Search(left, 'slots', tbl) or {}
-			---@todo new iterator or something to accept a map
-			-- First subtract weight of ingredients that will be removed
-			for name, needs in pairs(recipe.ingredients) do
-				if needs > 0 then
-					local item = Items(name)
-					if item then
-						newWeight -= (item.weight * needs)
+			local function fitsItemLimit()
+				local added = craftCount
+				for slot, count in pairs(tbl) do
+					if count >= 1 and left.items[slot]?.name == craftedItem.name then
+						added -= count
 					end
 				end
+				return Inventory.CanAddToLimit(left, craftedItem, added)
 			end
-
-			-- Add weight of crafted item
-			newWeight += (craftedItem.weight + (recipe.metadata?.weight or 0)) * craftCount
-
-			if newWeight > left.maxWeight then return false, 'cannot_carry' end
 
 			local items = Inventory.Search(left, 'slots', tbl) or {}
 			table.wipe(tbl)
@@ -200,6 +191,8 @@ lib.callback.register('ox_inventory:craftItem', function(source, id, index, reci
 
             if not activeSlots then return end
 
+			if not fitsItemLimit() then return false, 'cannot_carry' end
+
 			local hooks <close> = TriggerEventHooks('craftItem', {
 				source = source,
 				benchId = id,
@@ -214,6 +207,8 @@ lib.callback.register('ox_inventory:craftItem', function(source, id, index, reci
 			local success = lib.callback.await('ox_inventory:startCrafting', source, id, recipeId)
 
 			if success then
+				if not fitsItemLimit() then hooks.success = false return false, 'cannot_carry' end
+
 				for name, needs in pairs(recipe.ingredients) do
 					if Inventory.GetItemCount(left, name) < needs then hooks.success = false return end
 				end
