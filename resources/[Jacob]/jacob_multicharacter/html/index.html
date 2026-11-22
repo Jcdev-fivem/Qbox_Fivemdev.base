@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shifu Town Multicharacter</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS Modules -->
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/select.css">
+    <link rel="stylesheet" href="css/register.css">
+    
+    
+</head>
+<body>
+    <div id="app" class="hidden">
+        <!-- Background Clouds (For Select & Register) -->
+        <div id="sky-backdrop" class="sky-background">
+            <div class="cloud-layer layer-1"></div>
+            <div class="cloud-layer layer-2"></div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW 1: CHARACTER SELECTION SCREEN (SLOTS)     -->
+        <!-- ============================================== -->
+        <div id="select-screen" class="view-screen hidden">
+            <div class="select-header">
+                <h1 class="neon-title"><i class="fa-solid fa-users"></i> SELECT CHARACTER</h1>
+                <p class="sub-title">เลือกตัวละครเพื่อเข้าสู่เมือง หรือสร้างตัวละครใหม่</p>
+            </div>
+
+            <div class="slots-container" id="character-slots">
+                <!-- Dynamically generated slots 1 - 4 -->
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW 2: REGISTER PLAYER MODAL (Image 1 Exact)  -->
+        <!-- ============================================== -->
+        <div id="register-screen" class="view-screen hidden">
+            <div class="register-card">
+                <button type="button" class="back-btn" id="reg-back-btn" title="ย้อนกลับ">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+
+                <h1 class="register-title">REGISTER PLAYER</h1>
+
+                <form id="register-form" autocomplete="off">
+                    <div class="input-group">
+                        <input type="text" id="reg-firstname" placeholder="FIRST NAME" required maxlength="25">
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" id="reg-lastname" placeholder="LAST NAME" required maxlength="25">
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" id="reg-birthdate" placeholder="DATE OF BIRTH (01/01/2023)" required maxlength="10">
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" id="reg-height" placeholder="HEIGHT (140 - 180cm)" required maxlength="6">
+                    </div>
+
+                    <!-- Gender Radio Selector -->
+                    <div class="gender-selector">
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="0" checked>
+                            <span class="custom-radio"></span>
+                            <span class="gender-label">MALE</span>
+                        </label>
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="1">
+                            <span class="custom-radio"></span>
+                            <span class="gender-label">FEMALE</span>
+                        </label>
+                    </div>
+
+                    <!-- Hint Line -->
+                    <div class="hint-text">
+                        <span class="orange-dot">●</span> ตรวจสอบข้อมูลให้ถูกต้องแล้วกดยืนยัน
+                    </div>
+
+                    <!-- Error Feedback -->
+                    <div id="register-error" class="error-msg hidden"></div>
+
+                    <!-- Create Button -->
+                    <button type="submit" class="neon-submit-btn" id="reg-submit-btn">
+                        CREATE
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW 5: STAGING SIDE MENU (Right Side)          -->
+        <!-- ============================================== -->
+        <div id="staging-modal" class="view-screen hidden">
+            <div class="staging-panel">
+                <div class="staging-head">
+                    <div class="staging-brand">
+                        <span class="staging-mark"></span>
+                        <span class="staging-title">SHIFU TOWN</span>
+                    </div>
+                    <span class="staging-world">WORLD 01</span>
+                </div>
+
+                <button type="button" class="staging-option" id="btn-action-dressup">
+                    <span class="staging-icon"><i class="fa-solid fa-shirt"></i></span>
+                    <span class="staging-copy">
+                        <span class="staging-option-title">สกิน</span>
+                        <span class="staging-option-desc">กดปุ่มเพื่อแต่งตัว</span>
+                    </span>
+                </button>
+
+                <button type="button" class="staging-option" id="btn-action-entercity">
+                    <span class="staging-icon"><i class="fa-solid fa-plane-departure"></i></span>
+                    <span class="staging-copy">
+                        <span class="staging-option-title">เข้าเมือง</span>
+                        <span class="staging-option-desc">เริ่มต้นเรื่องราวของคุณ</span>
+                    </span>
+                </button>
+
+                <div class="staging-foot">
+                    <span class="staging-key"><b>E</b> เปิด / ปิดเมาส์</span>
+                    <span class="staging-state" id="staging-mouse-state">เมาส์ปิด</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW 6: ENTER CITY CONFIRMATION                -->
+        <!-- ============================================== -->
+        <div id="confirm-city-modal" class="view-screen hidden">
+            <div class="confirm-panel">
+                <div class="confirm-head">
+                    <span class="confirm-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                    <span class="confirm-title">คุณแน่ใจหรือไม่?</span>
+                </div>
+                <p class="confirm-desc">หากกด "ยืนยัน" คุณจะออกจากพื้นที่แต่งตัวและเข้าเมือง</p>
+                <div class="confirm-actions">
+                    <button type="button" class="confirm-btn secondary" id="confirm-city-cancel">ยกเลิก</button>
+                    <button type="button" class="confirm-btn primary" id="confirm-city-ok">ยืนยัน</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/common.js"></script>
+    <script src="js/register.js"></script>
+    <script src="js/select.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

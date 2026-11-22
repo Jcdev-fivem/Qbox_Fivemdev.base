@@ -1,0 +1,7 @@
+# FiveM cache and temporary files
+cache/
+*.log
+crashimetry/
+*.tmp
+.DS_Store
+Thumbs.db

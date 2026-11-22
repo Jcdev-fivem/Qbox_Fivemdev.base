@@ -1,0 +1,224 @@
+/* ====================================================================
+   CHARACTER SELECTION SCREEN (Shifu Town Theme)
+   ==================================================================== */
+
+#select-screen {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+.select-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.neon-title {
+    font-family: var(--font-heading);
+    font-size: 34px;
+    font-weight: 700;
+    color: #f6e7cf;
+    letter-spacing: 3px;
+    text-shadow: 0 0 18px rgba(232, 117, 47, 0.75), 0 0 30px rgba(232, 117, 47, 0.4);
+    margin-bottom: 6px;
+}
+
+.sub-title {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 300;
+}
+
+/* Slots Grid */
+.slots-container {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 24px;
+    max-width: 1200px;
+    width: 100%;
+}
+
+/* Character Card */
+.character-card {
+    flex: 1;
+    max-width: 270px;
+    min-height: 380px;
+    background: rgba(30, 18, 12, 0.94);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    border: 1px solid rgba(232, 117, 47, 0.25);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+.character-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(232, 117, 47, 0.7);
+    box-shadow: 0 16px 36px rgba(232, 117, 47, 0.3);
+}
+
+.slot-badge {
+    align-self: flex-start;
+    background: #3a2418;
+    color: #c4b096;
+    font-family: var(--font-heading);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.char-avatar {
+    width: 68px;
+    height: 68px;
+    background: #2e1d14;
+    border: 2px solid var(--primary-orange);
+    border-radius: 50%;
+    margin: 0 auto 6px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--primary-orange);
+    font-size: 28px;
+    box-shadow: 0 0 14px var(--orange-glow);
+}
+
+.char-fullname {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 700;
+    color: #f6e7cf;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.char-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #21140e;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.meta-label {
+    color: #9c8468;
+}
+
+.meta-value {
+    color: #f6e7cf;
+    font-weight: 500;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.btn-play {
+    flex: 1;
+    height: 42px;
+    background: linear-gradient(135deg, #e8752f 0%, #c85a32 100%);
+    border: none;
+    border-radius: 8px;
+    color: #f6e7cf;
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(232, 117, 47, 0.45);
+    transition: all 0.15s ease;
+}
+
+.btn-play:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(232, 117, 47, 0.7);
+    filter: brightness(1.1);
+}
+
+.btn-delete {
+    width: 42px;
+    height: 42px;
+    background: #2e1d14;
+    border: 1px solid #4a2e1c;
+    border-radius: 8px;
+    color: #ef4444;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-delete:hover {
+    background: #ef4444;
+    color: #f6e7cf;
+}
+
+/* Empty Slot Card */
+.character-card.empty-slot {
+    border: 2px dashed rgba(232, 117, 47, 0.3);
+    background: rgba(30, 18, 12, 0.6);
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    text-align: center;
+}
+
+.character-card.empty-slot:hover {
+    border-color: var(--primary-orange);
+    background: rgba(232, 117, 47, 0.08);
+}
+
+.empty-slot-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #2e1d14;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 24px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.character-card.empty-slot:hover .empty-slot-icon {
+    background: var(--primary-orange);
+    color: #f6e7cf;
+    box-shadow: 0 0 16px var(--primary-orange);
+}
+
+.empty-slot-text {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    color: #f6e7cf;
+    letter-spacing: 1px;
+}
